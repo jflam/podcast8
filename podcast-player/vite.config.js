@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { consoleCapture } from './vite-plugins/console-capture.js'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), consoleCapture()],
   server: {
     port: 3000,
     proxy: {

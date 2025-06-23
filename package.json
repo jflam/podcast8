@@ -1,0 +1,26 @@
+{
+  "name": "podcast8",
+  "version": "1.0.0",
+  "description": "Unified podcast player application with frontend and backend",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "podcast-player",
+    "podcast-backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -p \"[{name}]\" -n \"BACKEND,FRONTEND\" -c \"yellow.bold,cyan.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd podcast-backend && npm run serve",
+    "dev:frontend": "cd podcast-player && npm run dev",
+    "test": "npm run test:backend && npm run test:player",
+    "test:player": "cd podcast-player && npm test run",
+    "test:backend": "cd podcast-backend && npm test run",
+    "install:all": "npm install && cd podcast-backend && npm install && cd ../podcast-player && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
