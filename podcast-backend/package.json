@@ -1,0 +1,32 @@
+{
+  "name": "podcast-backend",
+  "version": "1.0.0",
+  "description": "Backend API for podcast player - handles RSS fetching and CORS",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "serve": "node cli.js serve",
+    "test": "vitest",
+    "test:contract": "vitest run tests/contract",
+    "test:integration": "vitest run tests/integration"
+  },
+  "bin": {
+    "podcast-backend": "./cli.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "rss-parser": "^3.13.0",
+    "node-cache": "^5.1.2",
+    "axios": "^1.6.0",
+    "commander": "^11.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "supertest": "^6.3.3",
+    "@vitest/ui": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
