@@ -1,0 +1,255 @@
+openapi: 3.0.0
+info:
+  title: Podcast Player API
+  version: 1.0.0
+  description: Backend API for fetching and caching podcast RSS feeds
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+
+paths:
+  /api/feed:
+    get:
+      summary: Get podcast feed
+      description: Fetches and returns the parsed podcast RSS feed
+      responses:
+        '200':
+          description: Successfully retrieved feed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - feed
+                  - cached
+                  - cacheAge
+                properties:
+                  feed:
+                    $ref: '#/components/schemas/Feed'
+                  cached:
+                    type: boolean
+                    description: Whether this response is from cache
+                  cacheAge:
+                    type: integer
+                    nullable: true
+                    description: Age of cache in seconds
+        '503':
+          description: RSS feed unavailable but cached data exists
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                  - message
+                  - cached
+                  - cacheAge
+                properties:
+                  error:
+                    type: string
+                    enum: [RSS_FEED_UNAVAILABLE]
+                  message:
+                    type: string
+                  cached:
+                    type: boolean
+                  cacheAge:
+                    type: integer
+                  feed:
+                    $ref: '#/components/schemas/Feed'
+
+  /api/feed/refresh:
+    get:
+      summary: Force refresh feed
+      description: Forces a refresh of the RSS feed cache
+      responses:
+        '200':
+          description: Feed refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - updated
+                  - newEpisodes
+                  - feed
+                properties:
+                  success:
+                    type: boolean
+                  updated:
+                    type: boolean
+                  newEpisodes:
+                    type: integer
+                  feed:
+                    $ref: '#/components/schemas/Feed'
+
+  /api/proxy/audio:
+    get:
+      summary: Proxy audio file
+      description: Proxies audio files to handle potential CORS issues
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+          description: Audio file URL to proxy
+      responses:
+        '200':
+          description: Audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: Partial content (range request)
+          headers:
+            Content-Range:
+              schema:
+                type: string
+            Accept-Ranges:
+              schema:
+                type: string
+                enum: [bytes]
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid audio URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/health:
+    get:
+      summary: Health check
+      description: Check if the API is healthy
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - version
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  version:
+                    type: string
+                    pattern: '^\d+\.\d+\.\d+$'
+                  cache:
+                    type: object
+                    properties:
+                      enabled:
+                        type: boolean
+                      size:
+                        type: integer
+                      age:
+                        type: integer
+
+components:
+  schemas:
+    Feed:
+      type: object
+      required:
+        - url
+        - title
+        - description
+        - imageUrl
+        - link
+        - language
+        - lastBuildDate
+        - lastFetchDate
+        - episodes
+      properties:
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        link:
+          type: string
+          format: uri
+        language:
+          type: string
+        lastBuildDate:
+          type: string
+          format: date-time
+        lastFetchDate:
+          type: string
+          format: date-time
+        episodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Episode'
+
+    Episode:
+      type: object
+      required:
+        - guid
+        - title
+        - description
+        - audioUrl
+        - duration
+        - publishDate
+      properties:
+        guid:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        descriptionHtml:
+          type: string
+        episodeNumber:
+          type: integer
+        audioUrl:
+          type: string
+          format: uri
+        audioLength:
+          type: integer
+        duration:
+          type: string
+          pattern: '^(\d{1,2}:)?\d{1,2}:\d{2}$'
+        imageUrl:
+          type: string
+          format: uri
+        publishDate:
+          type: string
+          format: date-time
+        author:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          enum:
+            - RSS_FEED_UNAVAILABLE
+            - INVALID_AUDIO_URL
+            - PROXY_ERROR
+            - CACHE_ERROR
+            - PARSE_ERROR
+        message:
+          type: string
+        details:
+          type: object
